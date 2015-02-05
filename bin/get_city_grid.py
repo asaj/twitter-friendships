@@ -5,6 +5,7 @@ import utils
 POINTS_FILE = "../data/cambridge_points.json"
 MA_NEIGHBORHOODS_FILE = "../data/MA_NEIGHBORHOODS.geojson"
 CAMBRIDGE_NEIGHBORHOODS_FILE = "../data/CAMBRIDGE_NEIGHBORHOODS.geojson"
+BBOX_FILE = "../data/bbox.json"
 PITCH = .25
 
 def state_neighborhoods_to_city_neighborhoods(city, state_neighborhoods_file, city_neighborhoods_file):
@@ -38,7 +39,7 @@ def relax_circle(point, pitch, geom):
       points += relax_circle(point, pitch, geom)
   return points
 
-def get_neighborhood_points(pitch, city_neighborhoods_file, neighborhood_points_file):
+def get_neighborhood_points(pitch, city_neighborhoods_file, neighborhood_points_file, bbox_file):
   points = {}
   r = {"pitch":pitch, "points":points}
   neighborhoods = ogr.Open(city_neighborhoods_file, 0)
@@ -65,14 +66,29 @@ def get_neighborhood_points(pitch, city_neighborhoods_file, neighborhood_points_
     print "Generated " + str(len(neighborhood_points)) + " points on a " + str(PITCH) + " mile grid for neighborhood " + feature_neighborhood
   #For http://www.darrinward.com/lat-long/?id=430756
   """
+  """
+  bbox = [[9999, 9999], [-9999, -9999]]
   for neighborhood in points.keys():
     for point in points[neighborhood]:
       print str(point[0]) + "," + str(point[1])
-  """
+      if point[1] < bbox[0][0]:
+        bbox[0][0] = point[1]
+      if point[1] > bbox[1][0]:
+        bbox[1][0] = point[1]
+      if point[0] < bbox[0][1]:
+        bbox[0][1] = point[0]
+      if point[0] > bbox[1][1]:
+        bbox[1][1] = point[0]
+  bbox[0][0] -= .01
+  bbox[0][1] -= .01
+  bbox[1][0] += .01
+  bbox[1][1] += .01
+  with open(bbox_file, 'w') as outfile:
+    json.dump(bbox, outfile)
   with open(neighborhood_points_file, 'w') as outfile:
     json.dump(r, outfile)
 
 #state_neighborhoods_to_city_neighborhoods("Cambridge", MA_NEIGHBORHOODS_FILE, CAMBRIDGE_NEIGHBORHOODS_FILE) 
-get_neighborhood_points(PITCH, CAMBRIDGE_NEIGHBORHOODS_FILE, POINTS_FILE)
+get_neighborhood_points(PITCH, CAMBRIDGE_NEIGHBORHOODS_FILE, POINTS_FILE, BBOX_FILE)
 
 

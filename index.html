@@ -1,51 +1,116 @@
 <!DOCTYPE html>
-<style>
-path.link {
-  fill: none;
-  stroke: #CCC;
-  stroke-width: 1.5px;
-}
-
-circle {
-  stroke: #CCC;
-  stroke-width: 1.5px;
-}
-/*
-If the node is nonzero, all outgoing edges should be highlighted
-*/
-marker {
-  fill: none;
-  stroke: #CCC;
-}
-</style>
 <meta charset="utf-8">
-<div id="canvas-svg"></div>
-<div id="controlContainer">
-  <div id="play_control">
-    <span id="iterations_slider_container"></span>
-  </div>
-  <div id="play_control_bottom">
-    <span id="buttons">
-      <i id="start-button" class="fa fa-play" style="display: inline"></i>
-      <i id="pause-button" class="fa fa-pause" style="display: none"></i>
-      <i id="reset-button" class="fa fa-step-backward"></i>
-    </span>
-    <span id="iterations_display"></span>
+<div id="content">
+  <div id="graphContainer"></div>
+  <div id="mapContainer"></div>
+  <div id="controlContainer">
+    <div id="play_control">
+      <span id="iterations_slider_container"></span>
+    </div>
+    <div id="play_control_bottom">
+      <span id="buttons">
+        <i id="start-button" class="fa fa-play" style="display: inline"></i>
+        <i id="pause-button" class="fa fa-pause" style="display: none"></i>
+        <i id="reset-button" class="fa fa-step-backward"></i>
+      </span>
+      <span id="iterations_display"></span>
+    </div>
   </div>
 </div>
-<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://youarehere.cc/w/static/libs/d3.v3.min.js"></script>
+<script src="http://youarehere.cc/w/static/libs/jquery.min.js"></script>
+<script src="http://youarehere.cc/w/static/libs/d3.tip.js"></script>
+<script src="http://youarehere.cc/w/static/bootstrap/js/bootstrap.min.js"></script>
+<script src="http://youarehere.cc/w/static/bootstrap-select/bootstrap-select.js"></script>
+<script src="http://youarehere.cc/w/static/js/d3-utils.js"></script>
+<script src="http://youarehere.cc/w/static/libs/topojson.v1.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
 <link rel="stylesheet" href="twitter.css"/>
 <link rel="stylesheet" href="test.css"/>
 <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
 <script >
-var WIDTH = 2550, HEIGHT = 1350;
+var WIDTH = 1000, HEIGHT = 600;
 var width = WIDTH, height = HEIGHT;
-var svg = d3.select("#canvas-svg").append("svg").attr("width", width).attr("height", height);
+var svg = d3.select("#graphContainer").append("svg").attr("width", width).attr("height", height);
 var color = d3.scale.linear().domain([0, .005]).range(['white', 'red']);
 var slider = d3.select("#slider").attr("width", 1000);
 var graph;
+var bbox = [[-71.110556 - .05, 42.373611 - .04], [-71.110556 + .05, 42.403611 + .02]];
+var iterations_index = 0;
 
-var drawD3Document = function(links) {
+window.onload = function() {
+  // Set up map.
+  var mapOptions = {
+    width: 600, 
+    height: 600,
+    scale: 1,
+    svgContainer: '#mapContainer',
+    lookup: 'cambridge',
+  }
+  map = new D3Map(mapOptions); 
+  queue()
+    .defer(d3.json, 'data/CAMBRIDGE_NEIGHBORHOODS.geojson')
+    .defer(d3.json, 'data/cambridge_twitter_graph.json')
+    .await(setup);
+}
+
+function setup(error, geojson, twitter_graph) {
+  map.loadGeoJSON(function() {
+    graph = twitter_graph;
+    console.log(graph);
+    path = d3.geo.path().projection(map.projection);
+    handleProjectionFromBoundingBox(bbox, 1000, 600);
+    drawMap(geojson, path);
+    drawGraph(graph.links);
+    svg.selectAll("circle").attr('fill', function(d) { return color(graph.pagerank["0"][d.name])});
+    var iterations_index = 0;
+    drawSlider();
+  });
+}
+
+function handleProjectionFromBoundingBox(bbox, width, height) {
+  var feature = { 
+      "type": "FeatureCollection",
+          "features": [
+              { "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": bbox[0]},
+                "properties": {"prop0": "value0"}
+              },
+              { "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": bbox[1]},
+                "properties": {"prop0": "value0"}
+              },
+          ]
+      };
+  map.projection.scale(1).translate([0, 0]);
+  var b = d3.geo.path().projection(map.projection).bounds(feature),
+      s = SCALE / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height),
+      t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
+  map.projection.scale(s).translate(t);  
+}
+
+function drawMap(geojson, path) {
+  var features = geojson.features;
+  var neighborhoods = map.svg.selectAll('.neighborhood')
+    .data(features)
+    .enter().append('path')
+    .attr('class', 'neighborhood')
+    .attr('name', function(d) {
+        d.neighborhood = d.properties.NAME;
+        return d.properties.NAME;
+    })
+    .attr('d', path)
+    .attr('fill', 'grey')
+    .attr('fill-opacity', 1)
+    .on('mouseover', function(d) {
+        neighborhoodMouseOver(d);
+     })
+     .on('mouseleave', function(d) {
+        neighborhoodMouseOut(d);
+     });
+}
+
+function drawGraph(links) {
     var nodes = {};
     links.forEach(function(link) {
         link.source = nodes[link.source] || (nodes[link.source] = {
@@ -74,79 +139,71 @@ var drawD3Document = function(links) {
         });
     }
 };
-  
-d3.json("data/cambridge_twitter_graph.json", function(error, graph){
-  drawD3Document(graph.links);
-  svg.selectAll("circle").attr('fill', function(d) { return color(graph.pagerank["0"][d.name])});
-  //var slider = d3.select('#slider').call(d3.slider().axis(true).min(0).max(100).step(1).on("slide", on_slide));
-  var iterations_index = 0;
 
-  function updateGraph(iterations_index) {
-    iterations = Object.keys(graph.pagerank)[iterations_index];
-    console.log(iterations);
-    svg.selectAll("circle").transition().attr('fill', function(d) { return color(graph.pagerank[iterations][d.name])});
-    d3.select("#iterations_slider").property("value", iterations_index);
-    d3.select("body").selectAll("#iterations_display").transition().text(iterations);
+function drawSlider() {
+  iterationsdisplay = d3.select("body").selectAll("#iterations_display");
+  start_button = d3.select("#start-button").on('click', startRun);
+  iterations_slider = d3.select("body").select("#iterations_slider_container").append("input")
+   .attr("type", "range")
+   .attr("class", "slider")
+   .attr("min", 0)
+   .attr("max", Object.keys(graph.pagerank).length)
+   .property("value", iterations_index)
+   .attr("id", "iterations_slider")
+ 
+  iterations_slider.on("change", function() {
+    updateGraph(this.value);
+    });
+  d3.select("#reset-button").on('click', resetOnClick);
+}
+
+function updateGraph(iterations_index) {
+  iterations = Object.keys(graph.pagerank)[iterations_index];
+  console.log(iterations);
+  svg.selectAll("circle").transition().attr('fill', function(d) { return color(graph.pagerank[iterations][d.name])});
+  d3.select("#iterations_slider").property("value", iterations_index);
+  d3.select("body").selectAll("#iterations_display").transition().text(iterations);
+}
+
+
+function startRun() {
+  if (iterations_index == Object.keys(graph.pagerank).length) {iterations_index = 0;}
+  timer_stop = false;
+  d3.select("#start-button").style("display", "none");
+  pause_button = d3.select("#pause-button")
+    .style("display", "inline")
+    .on('click', pauseOnClick);
+    runThrough();
+}
+
+function pauseOnClick() {
+  timer_stop = true;
+  clearInterval(clearVal);
+  pause_button = d3.select("#pause-button");
+  pause_button.style("display", "none");
+  d3.select("#start-button").style("display", "inline");
+}
+
+function resetOnClick() {
+  pauseOnClick();
+  updateGraph(0);
+}
+
+function runThrough() {
+  clearVal = setInterval(step, 500);
+}
+
+function step() {
+  if (iterations_index < Object.keys(graph.pagerank).length) {
+    iterations_index++;
+    updateGraph(iterations_index);
+    return timer_stop;
+  } else {
+    iterations_index = 0;
+    updateGraph(iterations_index);
+    resetOnClick();
+    return true;
   }
-
-  function drawSlider() {
-    iterationsdisplay = d3.select("body").selectAll("#iterations_display");
-    start_button = d3.select("#start-button").on('click', startRun);
-    iterations_slider = d3.select("body").select("#iterations_slider_container").append("input")
-     .attr("type", "range")
-     .attr("class", "slider")
-     .attr("min", 0)
-     .attr("max", Object.keys(graph.pagerank).length)
-     .property("value", iterations_index)
-     .attr("id", "iterations_slider")
-   
-    iterations_slider.on("change", function() {
-      updateGraph(this.value);
-      });
-    d3.select("#reset-button").on('click', resetOnClick);
-  }
-
-  function startRun() {
-    if (iterations_index == Object.keys(graph.pagerank).length) {iterations_index = 0;}
-    timer_stop = false;
-    d3.select("#start-button").style("display", "none");
-    pause_button = d3.select("#pause-button")
-      .style("display", "inline")
-      .on('click', pauseOnClick);
-      runThrough();
-  }
-
-  function pauseOnClick() {
-    timer_stop = true;
-    clearInterval(clearVal);
-    pause_button = d3.select("#pause-button");
-    pause_button.style("display", "none");
-    d3.select("#start-button").style("display", "inline");
-  }
-
-  function resetOnClick() {
-    pauseOnClick();
-    updateGraph(0);
-  }
-
-  function runThrough() {
-    clearVal = setInterval(step, 500);
-  }
-
-  function step() {
-    if (iterations_index < Object.keys(graph.pagerank).length) {
-      iterations_index++;
-      updateGraph(iterations_index);
-      return timer_stop;
-    } else {
-      iterations_index = 0;
-      updateGraph(iterations_index);
-      resetOnClick();
-      return true;
-    }
-  }
-  drawSlider();
-});
-
+}
 
 </script>

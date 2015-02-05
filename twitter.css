@@ -3,16 +3,32 @@ body{
   font-weight: lighter;
 }
 
+path.link {
+  fill: none;
+  stroke: #CCC;
+  stroke-width: 1.5px;
+}
+
+circle {
+  stroke: #CCC;
+  stroke-width: 1.5px;
+}
+/*
+If the node is nonzero, all outgoing edges should be highlighted
+*/
+marker {
+  fill: none;
+  stroke: #CCC;
+}
+
+#content{
+  position: relative;
+  height: 620px;
+}
+
 .container{
   position: relative;
   width: 1100px;
-}
-
-#mainframe{
-  position: relative;
-  height: 800px;
-  width: 1100px;
-  font-size: 18px;
 }
 
 .bg {
@@ -24,307 +40,52 @@ body{
     transition: background-color 0 linear;
 }
 
-#svgContainer {
+#graphContainer {
   top: 0;left: 0;
   position: absolute;
-  width: 1100px;
-  height: 750px;
-  z-index: 4;
+  width: 700px;
+  height: 600px;
+  z-index: 1;
 }
 
-#streetname{
-  z-index: 6;
-  display: none;
-  font-size: 14px;
-}
-
-.bar:hover{
-  fill-opacity: 0.9;
-}
-
-
-#chartKey{
+#mapContainer {
   position: absolute;
-  bottom:200px;left:0px;
-  display: none;
-  width: 120px;
-  text-align: center;
-  font-size: 16px;
-  border-radius: 5px;
-  background-color: rgba(50,50,50,0.6);
-  color:rgba(225,225,225,1.0);
-}
-
-
-
-
-#less{
-  position: absolute;
-  bottom:-30px;left: 0px;
-  font-size: 12px;
-  opacity: 1.0;
-  cursor: pointer;
-}
-
-#more{
-  position: absolute;
-  bottom:-30px;right: 0px;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.title-container {
-  margin-top: 30px;
-  font-family: 'EB Garamond', serif;
-
-}
-
-.title-container #logo, .title-container .title-text {
-    float: left;
-    font-size: 18px;
-    z-index:10;
-    position: relative;
-   cursor: pointer;
-}
-
-.title-container .title-text {
-    margin-left: 10px;
-}
-
-.title-container #showMore {
-    color: rgb(222,16,40);
-}
-
-
-.title-text .title {
-    margin-top: 0px; 
-    margin-bottom:0px
-}
-
-.title-text .subtitle {
-    font-size: 16px;
-    color: black;
-    z-index:10;
-}
-
-.title-keyword {
-   /*color: #545454;*/
-   color: black;
-}
-
-.spacer{
-  height: 1px;
-  clear:both;
-}
-
-#showMore{
-  position: relative;
-  cursor: pointer;
-  z-index: 10;
-}
-
-#essayBox{
-  position: absolute;
-  overflow-y:scroll;
-  display: none;
-  top: 90px;
-  left:0px;
-  height: 625px;
-  border-radius: 5px;
-  opacity: 0.0;
-  color : #444;
-  margin-top: 0px;
-  padding: 40px;
-  font-size: 14px;
-  letter-spacing: 1px;
-  background-color:rgba(255, 255, 255, 0.8);
-  font-family: 'EB Garamond', serif;
-}
-
-#viewMap{
-  cursor: pointer;
-}
-
-#essayBox-close {
-  cursor: pointer;
-  height: 15%;
-  width: 5%;
-  padding: 5px;
-  position: absolute;
-  top: 2%;
-  left: 95%;
-  z-index: 6;
-  color:rgb(222,16,40);
-}
-
-#essayContent{
-  margin-top: 5px;
-  margin-left: 18px;
-}
-
-#essayContent p {
-    margin-bottom: 20px;
-}
-
-#essayContent a {
-    color: black;
-    text-decoration: underline;
-}
-
-#essayContent h3{
-  font-weight: bold;
-}
-
-#footer {
-  position: relative;
-  width: 100%;
-  border-top: 1px dotted rgba(200,200,200,0.25);
-  margin-top: 5px;
-  font-size: 12px;
-  padding: 5px 10px 10px 0px;
-  color: rgba(160,160,160,0.98);
-  z-index: 6;
-  letter-spacing: 1.5px;
-}
-
-#feedback{
-  position: absolute;
-  right: 0;
-  top: 0;
-  font-size: 12px;
-  padding: 5px 10px 10px 0px;
-}
- 
-#footer i.fa-plus {
-  color: #FA8602;
-  font-size: 12px;
-  opacity: 0.5;
-  margin: 5px;
-}
-
-#footer a{
-  color: rgba(200,200,200,1.0);
-  font-size: 12px;
-}
-
-.footer-highlight{
-  color: rgba(200,200,200,1.0);
-  cursor: pointer;
-}
-
-.footer-highlight-link{
-  color: rgba(175,175,175,1.0);
-  cursor: pointer;
-  text-decoration: underline;
-}
- 
-
-.footer-plus {
-  color: #656566;
-  font-size: 12px;
-}
-
-.dot_other {
-  fill: black;
-  background-color: black;
-}
-
-.dot_retail {
-  fill: red;
-  background-color: lightblue;
-}
-
-.dot_restaurant {
-  fill: orange;
-  background-color: orange;
-}
-
-.dot_gas {
-  fill: purple;
-  background-color: purple;
-}
-
-.dot_transport {
-  fill: brown;
-  background-color: brown;
-}
-
-.dot_bar {
-  fill: yellow;
-  background-color: yellow;
+  width: 300px;
+  height: 300px;
+  left: 700px;
+  top: 300px;
 }
 
 #controlContainer{  
   position: absolute;
-  bottom: 20px;
-  height: 80px;
-  left: 10px;
-  width: 150px;
-  z-index: 6;
-  
-}
-#imbalance_metric_container{  
-  position: absolute;
-  bottom: 450px;
-  height: 80px;
-  left: 800px;
-  width: 150px;
-  z-index: 6;
-}
-#imbalance_metric{
-  float: right;
-  text-align: right;
-  font: 20px sans-serif;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: lighter;
   height: 50px;
-  width: 150px;
-  z-index:3;
-  color: black;
-  top:50px;
-}
-#rebalancing_metric_container{  
-  position: absolute;
-  bottom: 10px;
-  height: 80px;
-  left: 10px;
-  width: 150px;
-  z-index: 6;
-}
-#rebalancing_metric{
-  float: right;
-  text-align: right;
-  font: 20px sans-serif;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: lighter;
-  height: 50px;
-  width: 150px;
-  z-index:3;
-  color: black;
-  top:50px;
-}
-#traffic_container{  
-  position: absolute;
-  bottom: 500px;
-  height: 80px;
-  left: 800px;
-  width: 150px;
-  z-index: 6;
-}
-#traffic{
-  float: right;
-  text-align: right;
-  font: 20px sans-serif;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: lighter;
-  height: 50px;
-  width: 150px;
-  z-index:3;
-  color: black;
-  top:50px;
+  width: 300px;
+  left: 700px;
+  top: 220px;
+  z-index: 1;
 }
 
-#hour_display{
+#infoContainer{
+  position: absolute;
+  height: 250px;
+  width: 300px;
+  left: 700px;
+  z-index: 1;
+}
+.graph-title {
+  position: absolute;
+  left: 60px;
+  color: #545454;
+}
+
+h4 {
+  margin-bottom:5px;
+  margin-top: 5px;
+  font-family: "EB Garamond", serif;
+  font-size: 40px;
+}
+
+#iterations_display{
   float: right;
   text-align: right;
   font: 30px sans-serif;
@@ -338,13 +99,82 @@ body{
 }
 
 
-#hour_slider_container {
+#iterations_slider_container {
   margin-left: 0;
   height:0.5px;
   padding-top: 2px;
 }
 
-#hour_slider_container input[type=range] {
+#iterations_slider_container input[type=range] {
+  width: 150px;
+}
+
+#slider{
+  height: 1px;
+  width: 150px;
+  z-index: 6;
+  -webkit-appearance: none;
+  border-radius: 0px;
+  border:none;
+}
+
+#buttons {
+    position: relative;
+    float: left;
+    height: 50px;
+    top: 3px;
+}
+
+#play_control {
+	margin-top: 1px;
+	width: 150px;
+	height: 40px;
+}
+
+#play_control_bottom {
+	width: 150px;
+	height: 50px;
+}
+
+#start-button, #stop-button, #pause-button {
+  top-margin: 1px;
+  width: 20px;
+  height:20px;
+  border: none;
+}
+#pause-button {
+  display:none;
+}
+
+/* adapted from http://brennaobrien.com/blog/2014/05/style-input-type-range-in-every-browser.html */
+
+ibody {
+    padding: 30px;
+}
+input[type=range] {
+    /*removes default webkit styles*/
+
+#iterations_display{
+  float: right;
+  text-align: right;
+  font: 30px sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: lighter;
+  height: 50px;
+  width: 100px;
+  z-index:3;
+  color: black;
+  top:50px;
+}
+
+
+#iterations_slider_container {
+  margin-left: 0;
+  height:0.5px;
+  padding-top: 2px;
+}
+
+#iterations_slider_container input[type=range] {
   width: 150px;
 }
 
