@@ -190,7 +190,7 @@ def get_cambridge_twitter_friendships(user_ids):
     print "Already have friendships for " + str(len(friendships.keys())) + " cambridge twitter users"
     for (i, user_id) in enumerate(user_ids):
       if (user_id in friendships.keys()):
-        #print "Already found friendhips for user " + user_id + "  " + str(i) + "/" + str(len(user_ids))
+        print "Already found friendhips for user " + user_id + "  " + str(i) + "/" + str(len(user_ids))
         continue
       cursor = -1
       friends = []
@@ -215,6 +215,7 @@ def get_cambridge_twitter_friendships(user_ids):
         json.dump(friendships, outfile)
       print "Found " + str(len(friends)) + " friends for user " + user_id
 
+"""
 def get_neighborhood_friendship_matrix(users, neighborhood, friendships):
   print "Getting friendship matrix for " + str(len(users[neighborhood].keys())) + " twitter users in " + neighborhood
   num_users = len(users[neighborhood].keys())
@@ -240,6 +241,7 @@ def get_cambridge_twitter_friendships(users, friendships):
         matrix["neighborhood"] = get_neighborhood_friendship_matrix(users, neighborhood, friendships) 
     with open(MATRIX_FILE, 'w') as outfile:
         json.dump(matrix.tolist(), outfile)
+"""
       
 def create_d3_data_from_friendship_matrix(users, matrix, graph_path):
   graph = {}
@@ -258,5 +260,5 @@ def create_d3_data_from_friendship_matrix(users, matrix, graph_path):
     json.dump(graph, outfile)
 
 
-get_cambridge_twitter_users()
-#get_cambridge_twitter_friendships(users.keys())
+#get_cambridge_twitter_users()
+get_cambridge_twitter_friendships(users["cambridge"].keys())
