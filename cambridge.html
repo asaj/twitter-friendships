@@ -1,0 +1,151 @@
+<!Doctype HTML>
+<html>
+  <head>
+    <title> Hubway traffic in Boston, MA</title>
+    <!---   Styles   -->
+    <link href="http://youarehere.cc/w/static/bootstrap/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="http://youarehere.cc/w/static/bootstrap-select/bootstrap-select.css" rel="stylesheet"/>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300' rel='stylesheet' type='text/css'>
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+    
+    <meta property="og:image" content="http://youarehere.cc/static/media/coffeeshops/Boston.jpg" />
+    <meta property="og:title" content="Hubway traffic in Boston, MA" />
+    <link href='http://fonts.googleapis.com/css?family=EB+Garamond' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="http://youarehere.cc/w/static/css/histograms.css" />
+    <link rel="stylesheet" href="twitter.css" />
+
+    <!---   Scripts    -->
+    <script src="http://youarehere.cc/w/static/libs/d3.v3.min.js"></script>
+    <script src="http://youarehere.cc/w/static/libs/jquery.min.js"></script>
+    <script src="http://youarehere.cc/w/static/libs/d3.tip.js"></script>
+    <script src="http://youarehere.cc/w/static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="http://youarehere.cc/w/static/bootstrap-select/bootstrap-select.js"></script>
+    <script src="http://youarehere.cc/w/static/js/d3-utils.js"></script>
+    <script src="http://youarehere.cc/w/static/libs/topojson.v1.min.js"></script>
+    <script src="http://d3js.org/queue.v1.min.js"></script>
+    <script src="twitter.js"></script>
+    <script>
+    
+    function loadAppropriateFonts() {
+      if (navigator.platform.toLowerCase().indexOf('mac') == -1) {
+        $('body, h1, h2, h3, h4, h5').css('font-family', "'Open Sans', sans-serif");
+      }
+    }
+    $(function(){
+      if (/embed/i.test(window.location.search)){
+        $('body').addClass('embedded');
+        var showOriginal = $(document.createElement('a'));
+        showOriginal.attr('target', 'new');
+        showOriginal.attr('href', window.location.href.replace(window.location.search, '?more=1'));
+        showOriginal.html('... more');
+        showOriginal.attr('id', 'showOriginal');
+        $('#showMore').replaceWith(showOriginal);
+      }
+      if (/more/i.test(window.location.search)){
+        setTimeout(function(){$('#showMore').click();},1000);
+      }
+    });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="title-container">
+        <a id="logo" href="http://youarehere.cc">
+          <img src="http://youarehere.cc/w/static/img/logo.jpg" style="width: 50px">
+        </a>
+        <div class="title-text">
+          <a href="http://youarehere.cc/#/maps/by-city/cambridge" id="mapClass">
+            <h3 class="title" style="font-size: 36px; color:#545454"> Boston </h3>
+          </a> 
+          <div class="subtitle">
+            This map shows the most active routes Hubway cyclists are using in the city of Boston.
+            <a id="showMore" href="#"> ... more </a>
+          </div>
+        </div>
+        <div class="spacer"></div>
+      </div>
+      <div id="content">
+        <div id="graphContainer"></div>
+        <div id="mapContainer"></div>
+        <div id="infoContainer">
+          <h4 id="neighborhoodDisplay" style="margin-top: 15px"></h4> 
+          <h3 id="twitterUsersDisplay" style="margin-top: 15px"></h4> 
+          <h3 id="twitterFriendshipsDisplay" style="margin-top: 15px"></h4> 
+        </div>
+        <div id="controlContainer">
+          <div id="play_control">
+            <span id="iterations_slider_container"></span>
+          </div>
+          <div id="play_control_bottom">
+            <span id="buttons">
+              <i id="start-button" class="fa fa-play" style="display: inline"></i>
+              <i id="pause-button" class="fa fa-pause" style="display: none"></i>
+              <i id="reset-button" class="fa fa-step-backward"></i>
+            </span>
+            <span id="iterations_display"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+      <div id='essayBox'>
+        <div id='essayBox-close' class="glyphicon glyphicon-remove"></div>
+        <div id='essayContent'>
+          <p>
+            This map shows the usage and efficiency of Hubway bike-stations in the city of Boston over the course of a single day. 
+          </p>
+
+          <p>
+            Each bike station is both a point of departure and a destination. In a balanced system the amount of bikes departing equals the ones arriving. When stations are unbalanced, due, for example, to commuting patterns, sightseeing riders or public transit usage, the system restocks depleted stations by hauling bikes from 'sinks' to 'sources' using cargo bikes and vans. 
+          </p>
+
+          <p>
+            Each circle marks the location of a bike station. The circles expand and contract to show the amount of bikes arriving and departing within a 15 minute time-window. Blue circles represent more departures than arrivals, while red indicates more arrivals than departures.  In each station, a dial points to the direction where the majority of bike traffic from that station goes.
+          </p>
+
+          <p>
+            We made this map using Hubway’s Boston open data set of over a million rides in 2013. The data includes time-stamp and station number for every trip made. From this we identified top 250 station pairings then estimated the different routes using Google Directions API.  The difference in the number of  
+          </p>
+
+          <h4> Data Sources </h4>
+          <ol>
+            <li><a href="http://hubwaydatachallenge.org/trip-history-data/"> Hubway trips and stations</a></li>
+          </ol>
+          <a id="viewMap" href="#"> View Map</a>
+        </div>
+      </div>
+      <div id="footer">
+        <div class="pull-left">
+          This work is part of the <a href="/">You Are Here</a> project 
+          <span class="footer-plus">+</span>
+          <a href="http://socialcomputing.media.mit.edu"> The Social Computing Group </a>
+          <span class="footer-plus">+</span>
+          <a href="http://media.mit.edu"> MIT Media Lab </a>
+          <span class="footer-plus">+</span>
+          <a href="http://www.mit.edu">Massachusetts Institute of Technology</a>
+        </div>
+        <div class="pull-right">
+          <a href="/#/report"> Report an Issue <i class="fa fa-comment-o"></i></a>
+          <span class="footer-plus">|</span>
+          <script type="text/javascript">
+            function embedMe(){
+              // We subtracting 48px from the height to
+              // approximately account for embed mode not having
+              // a footer and having a smaller title.
+              var params = {
+                map: window.location.href,
+                width: $('body > .container').outerWidth(),
+                height: $('body > .container').outerHeight() - 48
+              };
+              window.location.href = '/#/embed/'+encodeURIComponent(JSON.stringify(params));
+            }
+          </script>
+          <a href="#" onclick="embedMe()">Embed</a>
+          <span class="footer-plus">|</span>
+          <a href="/#/faq"> FAQ </a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+
