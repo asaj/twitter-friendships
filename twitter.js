@@ -1,4 +1,5 @@
 var svg;
+var clearVal;
 var node_color;
 var neighborhood_color;
 var slider;
@@ -7,6 +8,7 @@ var graph;
 var bbox = [[-71.16781724926273, 42.34361964310939], [-71.05788865715883, 42.41153795804243]];
 var iterations_index = 0;
 var neighborhood = "Mit";
+var force_nodes = {};
 
 window.onload = function() {
   // Set up map.
@@ -27,18 +29,32 @@ window.onload = function() {
 function setup(error, geojson, twitter_graph) {
   map.loadGeoJSON(function() {
     svg = d3.select("#graphContainer").append("svg").attr("width", 700).attr("height", 600);
-    node_color = d3.scale.linear().domain([0, .005]).range(['white', 'red']);
-    neighborhood_color = d3.scale.linear().domain([0, 600]).range(['white', 'red']);
+    neighborhood_color = d3.scale.linear().domain([0, 2000]).range(['white', 'red']);
     slider = d3.select("#slider").attr("width", 1000);
     graph = twitter_graph;
-    console.log(graph);
     path = d3.geo.path().projection(map.projection);
     handleProjectionFromBoundingBox(bbox, 300, 300);
     drawMap(geojson, path);
-    drawGraph(graph.links);
+    initializeLinks(graph);
     changeNeighborhood(neighborhood);
-    updateGraph(iterations_index);
     drawSlider();
+  });
+}
+function initializeLinks(graph) {
+  Object.keys(graph).forEach(function(neighborhood) {
+    var nodes = {};
+    graph[neighborhood].links.forEach(function(link) {
+        link.source = nodes[link.source] || (nodes[link.source] = {
+            name: link.source, 
+            screen_name: graph[neighborhood].nodes[link.source_id].screen_name
+        });
+        link.target = nodes[link.target] || (nodes[link.target] = {
+            name: link.target,
+            screen_name: graph[neighborhood].nodes[link.target_id].screen_name
+        });
+        link.value = +link.value;
+    });
+    force_nodes[neighborhood] = nodes;
   });
 }
 
@@ -75,10 +91,8 @@ function drawMap(geojson, path) {
     })
     .attr('d', path)
     .attr('fill', function(d) {
-      //return neighborhood_color(graph["nodes"][d.neighborhood].length);
-      return 'grey';
+      return neighborhood_color(Object.keys(graph[d.neighborhood].nodes).length);
     })
-    .attr('fill-opacity', .05)
     .on('mouseover', function(d) {
         neighborhoodMouseOver(d);
      })
@@ -114,26 +128,28 @@ function changeNeighborhood(n) {
   map.svg.selectAll(selection).attr('stroke', 'black').attr('stroke-width', 4);
   neighborhood = n;
   updateInfo(neighborhood);
-
+  d3.selectAll(".node").remove();
+  d3.selectAll(".link").remove();
+  drawGraph(graph[neighborhood].links, force_nodes[neighborhood]);
+  iterations_index = 0;
+  updateGraph(iterations_index);
+  resetOnClick();
+  d3.selectAll('.node').call(tip);
 }
-  
-
-function drawGraph(links) {
-    var nodes = {};
-    links.forEach(function(link) {
-        link.source = nodes[link.source] || (nodes[link.source] = {
-            name: link.source
-        });
-        link.target = nodes[link.target] || (nodes[link.target] = {
-            name: link.target
-        });
-        link.value = +link.value;
+var tip = d3.tip()
+    .attr('class', 'd3-tip')
+    .offset([-10, 0])
+    .html(function(d) {
+        d.text = d.screen_name;
+        return "<div class='tip' style='color:#fff; max-width: 200px; font-weight: normal; text-align: center;'>" + d.text + "</div>";
     });
-    var force = d3.layout.force().nodes(d3.values(nodes)).links(links).size([ 700, 600 ]).linkDistance(5).charge(-100).on("tick", tick);
+  
+function drawGraph(links, nodes) {
+    var force = d3.layout.force().nodes(d3.values(nodes)).links(links).size([ 700, 600 ]).linkDistance(50).charge(-50).on("tick", tick);
     svg.append("svg:defs").selectAll("marker").data([ "end" ]).enter().append("svg:marker").attr("id", String).attr("viewBox", "0 -5 10 10").attr("refX", 15).attr("refY", -1.5).attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto").append("svg:path").attr("d", "M0,-5L10,0L0,5");
     var path = svg.append("svg:g").selectAll("path").data(force.links()).enter().append("svg:path").attr("class", "link").attr("marker-end", "url(#end)");
-    var node = svg.selectAll(".node").data(force.nodes()).enter().append("g").attr("class", "node");
-    node.append("circle").attr("r", 5);
+    var node = svg.selectAll(".node").data(force.nodes()).enter().append("g").attr("class", "node").on('mouseover', tip.show).on('mouseout', tip.hide);
+    node.append("circle").attr("r", 5).attr("fill", "white");
     force.start();
     for (var i = 0; i < 100; ++i) force.tick();
     force.stop();
@@ -155,7 +171,7 @@ function drawSlider() {
    .attr("type", "range")
    .attr("class", "slider")
    .attr("min", 0)
-   .attr("max", Object.keys(graph.pagerank).length)
+   .attr("max", Object.keys(graph[neighborhood].pagerank).length - 1)
    .property("value", iterations_index)
    .attr("id", "iterations_slider")
  
@@ -167,29 +183,28 @@ function drawSlider() {
 
 function updateInfo(neighborhood) {
   d3.selectAll('#neighborhoodDisplay').text(neighborhood);
-  //d3.selectAll('#twitterUsersDisplay').text(graph["nodes"][neighborhood].length + " twitter users");
-  //d3.selectAll('#twitterFriendshipsDisplay').text(graph["links"][neighborhood].length + " twitter users");
-  d3.selectAll('#twitterUsersDisplay').text(graph["nodes"].length + " twitter users");
-  d3.selectAll('#twitterFriendshipsDisplay').text(graph["links"].length + " twitter friendships");
+  d3.selectAll('#twitterUsersDisplay').text(Object.keys(graph[neighborhood].nodes).length + " twitter users");
+  d3.selectAll('#twitterFriendshipsDisplay').text(graph[neighborhood].links.length + " friendships");
 }
 
 function updateGraph(iterations_index) {
-  iterations = Object.keys(graph.pagerank)[iterations_index];
-  console.log(iterations);
-  svg.selectAll("circle").transition().attr('fill', function(d) { return node_color(graph.pagerank[iterations][d.name])});
+  node_color = d3.scale.linear().domain([0, 20.0 / (Object.keys(graph[neighborhood].nodes).length)]).range(['white', 'red']);
+  iterations = Object.keys(graph[neighborhood].pagerank)[iterations_index];
+  svg.selectAll("circle").transition().attr('fill', function(d) { return node_color(graph[neighborhood].pagerank[iterations][d.name])});
   d3.select("#iterations_slider").property("value", iterations_index);
   d3.select("body").selectAll("#iterations_display").transition().text(iterations);
+  //d3.selectAll('.link').transition().style('stroke', function(d) { return node_color(graph[neighborhood].pagerank[iterations][d.source.name]);}); 
 }
 
 
 function startRun() {
-  if (iterations_index == Object.keys(graph.pagerank).length) {iterations_index = 0;}
+  if (iterations_index == Object.keys(graph[neighborhood].pagerank).length) {iterations_index = 0;}
   timer_stop = false;
   d3.select("#start-button").style("display", "none");
   pause_button = d3.select("#pause-button")
     .style("display", "inline")
     .on('click', pauseOnClick);
-    runThrough();
+  runThrough();
 }
 
 function pauseOnClick() {
@@ -201,23 +216,25 @@ function pauseOnClick() {
 }
 
 function resetOnClick() {
+  iterations_index = 0;
   pauseOnClick();
   updateGraph(0);
 }
 
 function runThrough() {
-  clearVal = setInterval(step, 500);
+  clearVal = setInterval(step, 100);
 }
 
 function step() {
-  if (iterations_index < Object.keys(graph.pagerank).length) {
+  if (iterations_index < Object.keys(graph[neighborhood].pagerank).length - 1) {
     iterations_index++;
     updateGraph(iterations_index);
     return timer_stop;
   } else {
-    iterations_index = 0;
-    updateGraph(iterations_index);
-    resetOnClick();
+    //iterations_index = 0;
+    //updateGraph(iterations_index);
+    //resetOnClick();
+    pauseOnClick();
     return true;
   }
 }

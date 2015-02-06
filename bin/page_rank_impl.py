@@ -97,6 +97,8 @@ def pagerank(G,alpha=0.85,max_iter=100,tol=1.0e-8,nstart=None):
     dangle=[n for n in W if out_degree[n]==0.0]  
     i=0
     while True: # power iteration: make up to max_iter iterations
+        if max_iter == i:
+          return x
         xlast=x
         x=dict.fromkeys(xlast.keys(),0)
         danglesum=alpha/nnodes*sum(xlast[n] for n in dangle)
@@ -114,8 +116,8 @@ def pagerank(G,alpha=0.85,max_iter=100,tol=1.0e-8,nstart=None):
         err=sum([abs(x[n]-xlast[n]) for n in x])
         if err < tol:
             break
-        if i>max_iter:
-            return x
+        #if i > max_iter:
+            #return x
             #raise NetworkXError("pagerank: power iteration failed to converge in %d iterations."%(i+1))
         i+=1
     return x

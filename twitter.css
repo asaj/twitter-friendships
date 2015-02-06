@@ -2,7 +2,21 @@ body{
   font-family: 'EB Garamond', serif;
   font-weight: lighter;
 }
+.slider{
+  height: 1px;
+  width: 150px;
+  z-index: 6;
+  -webkit-appearance: none;
+  border-radius: 0px;
+  border:none;
+}
 
+div.tip{
+z-index: 10;
+}
+div.d3-tip{
+z-index: 10;
+}
 path.link {
   fill: none;
   stroke: #CCC;
@@ -106,81 +120,12 @@ h4 {
 }
 
 #iterations_slider_container input[type=range] {
-  width: 150px;
+  width: 300px;
 }
 
 #slider{
   height: 1px;
-  width: 150px;
-  z-index: 6;
-  -webkit-appearance: none;
-  border-radius: 0px;
-  border:none;
-}
-
-#buttons {
-    position: relative;
-    float: left;
-    height: 50px;
-    top: 3px;
-}
-
-#play_control {
-	margin-top: 1px;
-	width: 150px;
-	height: 40px;
-}
-
-#play_control_bottom {
-	width: 150px;
-	height: 50px;
-}
-
-#start-button, #stop-button, #pause-button {
-  top-margin: 1px;
-  width: 20px;
-  height:20px;
-  border: none;
-}
-#pause-button {
-  display:none;
-}
-
-/* adapted from http://brennaobrien.com/blog/2014/05/style-input-type-range-in-every-browser.html */
-
-ibody {
-    padding: 30px;
-}
-input[type=range] {
-    /*removes default webkit styles*/
-
-#iterations_display{
-  float: right;
-  text-align: right;
-  font: 30px sans-serif;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: lighter;
-  height: 50px;
-  width: 100px;
-  z-index:3;
-  color: black;
-  top:50px;
-}
-
-
-#iterations_slider_container {
-  margin-left: 0;
-  height:0.5px;
-  padding-top: 2px;
-}
-
-#iterations_slider_container input[type=range] {
-  width: 150px;
-}
-
-#slider{
-  height: 1px;
-  width: 150px;
+  width: 300px;
   z-index: 6;
   -webkit-appearance: none;
   border-radius: 0px;

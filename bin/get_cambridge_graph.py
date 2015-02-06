@@ -42,13 +42,13 @@ queries.append("%20")
 USERS_FILE = "../data/cambridge_twitter_users.json"
 users = json.loads(open(USERS_FILE).read())
 
-print "Loaded " + str(sum([len(users[key]) for key in users.keys()]) - len(users["cambridge"])) + " cambridge twitter users in " + str(len(users.keys()) - 1) + " neighborhoods"
+print "Loaded " + str(len(users["cambridge"])) + " cambridge twitter users in " + str(len(users.keys()) - 1) + " neighborhoods"
 
 FRIENDSHIPS_FILE = "../data/cambridge_twitter_friendships.json"
 friendships = json.loads(open(FRIENDSHIPS_FILE).read())
 
 MATRIX_FILE = "../data/cambridge_twitter_graph_matrix.json"
-matrix = np.array(json.loads(open(MATRIX_FILE).read()))
+matrix = json.loads(open(MATRIX_FILE).read())
 
 def setup_oauth():
     """Authorize your app via identifier."""
@@ -199,6 +199,9 @@ def get_cambridge_twitter_friendships(user_ids):
         print "URL: " + request_url
         r = requests.get(url=request_url, auth=oauth)
 
+        if 'error' in r.json().keys():
+          if r.json()['error'] == 'Not authorized.':
+            break
         # If we run out of requests, sleep for 30 minutes and try again
         while ('errors' in r.json().keys()):
           print "Found error in json response: \"" + r.json()["errors"][0]["message"]+ "\", sleeping for 15 minutes"
@@ -215,49 +218,6 @@ def get_cambridge_twitter_friendships(user_ids):
         json.dump(friendships, outfile)
       print "Found " + str(len(friends)) + " friends for user " + user_id
 
-"""
-def get_neighborhood_friendship_matrix(users, neighborhood, friendships):
-  print "Getting friendship matrix for " + str(len(users[neighborhood].keys())) + " twitter users in " + neighborhood
-  num_users = len(users[neighborhood].keys())
-  matrix = np.zeros((num_users, num_users))
-  for i, user_id in enumerate(users[neighborhood].keys()):
-    if i % 10 == 0:
-      print str(i) + "/" + str(num_users)
-    if user_id not in friendships.keys():
-      print "Can't find friendships for user " + user_id 
-      continue
-    neighborhood_friends = []
-    for friend in [str(f) for f in friendships[user_id]]:
-      if friend in users[neighborhood].keys():
-        neighborhood_friends.append(friend)
-    for friend in neighborhood_friends:
-      print "Friendship between " + user_id + " and " + friend
-      matrix[i][users.keys().index(friend)] = 1.0 / float(len(cambridge_friends))
-  return matrix.tolist()
-
-def get_cambridge_twitter_friendships(users, friendships):
-    matrix = {}
-    for neighborhood in users.keys():
-        matrix["neighborhood"] = get_neighborhood_friendship_matrix(users, neighborhood, friendships) 
-    with open(MATRIX_FILE, 'w') as outfile:
-        json.dump(matrix.tolist(), outfile)
-"""
-      
-def create_d3_data_from_friendship_matrix(users, matrix, graph_path):
-  graph = {}
-  nodes = []
-  for user_id in users.keys():
-    nodes.append({"group": 1, "id": str(user_id), "screen_name": users[user_id]["screen_name"], "name": users[user_id]["name"]})
-  graph["nodes"] = nodes
-  links = []
-  for i, row in enumerate(matrix):
-    for j, entry in enumerate(row):
-      if entry > 0:
-        links.append({"source": i, "target": j, "type":"friendship", "value":1})
-        print "Found friendship between " + users.keys()[i] + " and " + users.keys()[j] 
-  graph["links"] = links
-  with open(graph_path, 'w') as outfile:
-    json.dump(graph, outfile)
 
 
 #get_cambridge_twitter_users()
